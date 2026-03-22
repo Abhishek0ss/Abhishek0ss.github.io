@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abhishek S S | Interactive Retro Portfolio</title>
+    <!-- Importing Retro Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: #f4f0e6;
+            font-family: 'VT323', monospace;
+            color: #2b2b2b;
+            overflow-x: hidden;
+        }
+
+        /* Snake Game Canvas (Background) */
+        #snake-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none; /* Allows interacting with elements above */
+        }
+
+        /* HUD Settings */
+        .hud {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        .hud-box {
+            background: white;
+            border: 3px solid #2b2b2b;
+            padding: 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            line-height: 1.8;
+            box-shadow: 2px 2px 0px rgba(0,0,0,1);
+        }
+
+        /* Navigation Bar */
+        nav {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border: 3px solid #2b2b2b;
+            width: 90%;
+            max-width: 850px;
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            z-index: 100;
+            box-shadow: 4px 4px 0px rgba(0,0,0,1);
+        }
+
+        .nav-left, .nav-right {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #2b2b2b;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            transition: color 0.2s;
+        }
+        
+        nav a:hover {
+            color: #4f46e5;
+        }
+
+        /* Camera Clip Simulation */
+        .nav-clip {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 35px;
+            background: #a3a3a3;
+            border: 3px solid #2b2b2b;
+            border-radius: 5px;
+            box-shadow: 2px 2px 0px rgba(0,0,0,1);
+            z-index: 101;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .nav-clip::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 3px solid #2b2b2b;
+            background: #d4d4d4;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 120px 20px 50px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Reusable Components */
+        .retro-card {
+            background: white;
+            border: 4px solid #2b2b2b;
+            box-shadow: 8px 8px 0px rgba(0,0,0,1);
+            padding: 40px;
+            position: relative;
+            margin-bottom: 50px;
+        }
+
+        .tape {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1), 0 2px 2px rgba(0,0,0,0.1);
+            z-index: 5;
+            rotate: -2deg;
+        }
+
+        .title-pixel {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 3rem;
+            text-align: center;
+            margin: 50px 0;
+            color: #2b2b2b;
+            text-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #2b2b2b;
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            text-decoration: none;
+            border: 3px solid #2b2b2b;
+            box-shadow: 4px 4px 0px rgba(0,0,0,1);
+            transition: transform 0.1s, box-shadow 0.1s;
+            cursor: pointer;
+            margin-right: 15px;
+        }
+
+        .btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px rgba(0,0,0,1);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #2b2b2b;
+        }
+        
+        .btn-blue {
+            background: #4f46e5;
+            color: white;
+            border-color: #2b2b2b;
+        }
+
+        /* Hero Section */
+        .hero-date {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #6b7280;
+        }
+
+        .hero-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            margin-top: 10px;
+            line-height: 1.2;
+        }
+
+        .hero-title span {
+            color: #4f46e5;
+        }
+
+        .hero-subtitle {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            margin-bottom: 30px;
+            color: #4b5563;
+        }
+
+        .hero-text {
+            font-size: 1.6rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            max-width: 600px;
+            border-left: 4px solid #4ade80;
+            padding-left: 15px;
+        }
+
+        .hero-layout {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .hero-avatar {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background-color: #a7f3d0;
+            border: 4px solid #2b2b2b;
+            box-shadow: 8px 8px 0px rgba(0,0,0,1);
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4rem;
+        }
+
+        /* Projects Section */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .project-card {
+            background: white;
+            border: 4px solid #2b2b2b;
+            box-shadow: 8px 8px 0px rgba(0,0,0,1);
+            padding: 30px;
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .project-card h3 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        .project-card p {
+            font-size: 1.4rem;
+            min-height: 80px;
+            line-height: 1.5;
+        }
+
+        .tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            border-top: 2px dashed #9ca3af;
+            padding-top: 15px;
+        }
+
+        .tag {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 9px;
+            padding: 6px 10px;
+            border: 2px solid #2b2b2b;
+            background: #f3f4f6;
+        }
+
+        /* Resume Section */
+        .resume-preview-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            text-align: center;
+        }
+
+        .resume-preview-container p {
+            font-size: 1.5rem;
+        }
+
+        .resume-mockup {
+            width: 100%;
+            max-width: 500px;
+            height: 350px;
+            background: #fff;
+            border: 4px dashed #9ca3af;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #6b7280;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        /* Contact Section */
+        .contact-box {
+            text-align: center;
+        }
+
+        .contact-details {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .contact-item {
+            border: 3px solid #2b2b2b;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            background: white;
+            box-shadow: 4px 4px 0px rgba(0,0,0,1);
+        }
+
+        .socials {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px dashed #9ca3af;
+        }
+
+        .socials a {
+            text-decoration: none;
+            color: #2b2b2b;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            border: 3px solid #2b2b2b;
+            padding: 10px;
+            box-shadow: 3px 3px 0px rgba(0,0,0,1);
+            transition: all 0.2s;
+        }
+        
+        .socials a:hover {
+            background: #2b2b2b;
+            color: white;
+        }
+
+        /* Timeline / Education */
+        .timeline {
+            border-left: 4px solid #2b2b2b;
+            margin-left: 20px;
+            padding-left: 30px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 40px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -44px;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            border: 3px solid #2b2b2b;
+        }
+
+        .timeline-item h3 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .timeline-item .date {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 9px;
+            color: #ef4444;
+            margin-bottom: 10px;
+        }
+
+        .timeline-item p {
+            font-size: 1.4rem;
+        }
+
+        /* Coding Profiles */
+        .coding-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .coding-card {
+            background: white;
+            border: 4px solid #2b2b2b;
+            box-shadow: 6px 6px 0px rgba(0,0,0,1);
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .coding-card:hover {
+            transform: translateY(-5px);
+        }
+        .coding-card h3 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+        .coding-ph {
+            width: 100%;
+            height: 150px;
+            border: 3px dashed #9ca3af;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        .coding-ph img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Responsive Fixes */
+        @media (max-width: 768px) {
+            .hero-layout {
+                flex-direction: column-reverse;
+            }
+            nav {
+                flex-direction: column;
+                padding: 20px 0;
+            }
+            .nav-left, .nav-right {
+                flex-wrap: wrap;
+            }
+            .title-pixel {
+                font-size: 2rem;
+            }
+            .hero-title {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Snake Game -->
+    <canvas id="snake-canvas"></canvas>
+
+    <!-- Top Right HUD -->
+    <div class="hud">
+        <div class="hud-box">
+            MODE: <span id="mode-display" style="color:#4f46e5;">AUTO</span><br>
+            SCORE: <span id="score-display">0</span>
+        </div>
+    </div>
+
+    <!-- Retro Navigation -->
+    <nav>
+        <div class="nav-clip"></div>
+        <div class="nav-left">
+            <a href="#hero">HOME</a>
+            <a href="#about">ABOUT</a>
+            <a href="#projects">PROJECTS</a>
+        </div>
+        <div class="nav-right">
+            <a href="#coding">PROFILES</a>
+            <a href="#resume">RESUME</a>
+            <a href="#education">EDUCATION</a>
+            <a href="#contact">CONTACT</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Hero Section -->
+        <section id="hero">
+            <h1 class="title-pixel">ABOUT ME</h1>
+            <div class="retro-card">
+                <div class="tape"></div>
+                <div class="hero-date" id="current-date">03/13/2026</div>
+                <div class="hero-layout">
+                    <div>
+                        <div class="hero-subtitle">@abhishek0ss</div>
+                        <h2 class="hero-title">HI, I'M <br><span>ABHISHEK</span></h2>
+                        
+                        <p class="hero-text">
+                            AI-ML undergraduate at Lovely Professional University with hands-on experience building production-ready machine learning systems. I thrive where mathematics meets software engineering and focus on intelligent, scalable architectures.
+                        </p>
+                        
+                        <div>
+                            <a href="#projects" class="btn">View Projects &rarr;</a>
+                            <a href="#contact" class="btn btn-outline">Contact Me</a>
+                        </div>
+                    </div>
+                    <div class="hero-avatar">
+                        👨‍💻
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="projects">
+            <h1 class="title-pixel">FEATURED PROJECTS</h1>
+            <div class="projects-grid">
+                
+                <div class="project-card">
+                    <div class="tape"></div>
+                    <h3>Facial Recognition</h3>
+                    <p>Adaptive Facial Recognition System. End-to-end face recognition pipeline using HOG + RBF-kernel SVM achieving 92% test accuracy with GPU-free real-time inference.</p>
+                    <div class="tags">
+                        <span class="tag">Python</span>
+                        <span class="tag">SVM</span>
+                        <span class="tag">OpenCV</span>
+                        <span class="tag">HOG</span>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="tape"></div>
+                    <h3>Genetic Disorder</h3>
+                    <p>Genetic Disorder Prediction Using SVM. Image-driven SVM prediction model reaching ~92% accuracy. SMOTE improved minority-class recall by 25% with a real-time Tkinter GUI.</p>
+                    <div class="tags">
+                        <span class="tag">Python</span>
+                        <span class="tag">Tkinter</span>
+                        <span class="tag">Pandas</span>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="tape"></div>
+                    <h3>AWS Architecture</h3>
+                    <p>Completed AWS Solution Architecture Job Simulation via Forage. Designed scalable cloud architecture for enterprise scenarios.</p>
+                    <div class="tags">
+                        <span class="tag">AWS</span>
+                        <span class="tag">Cloud</span>
+                        <span class="tag">Architecture</span>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="tape"></div>
+                    <h3>TATA - GenAI</h3>
+                    <p>GenAI Powered Data Analytics Job Simulation via Forage. Tackled real TATA business analytics challenges using generative AI tools.</p>
+                    <div class="tags">
+                        <span class="tag">GenAI</span>
+                        <span class="tag">Analytics</span>
+                        <span class="tag">Simulation</span>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Resume Section -->
+        <section id="resume">
+            <h1 class="title-pixel">RESUME</h1>
+            <div class="retro-card resume-preview-container">
+                <div class="tape"></div>
+                <p>Preview my professional journey and securely download the complete resume below.</p>
+                <div class="resume-mockup">
+                    📄 RESUME PREVIEW
+                </div>
+                <a href="#" class="btn btn-blue" onclick="alert('Resume download triggered!')">💾 DOWNLOAD RESUME</a>
+            </div>
+        </section>
+
+        <!-- Education/Timeline -->
+        <section id="education">
+            <h1 class="title-pixel">EDUCATION</h1>
+            <div class="retro-card">
+                <div class="tape"></div>
+                <div class="timeline">
+                    
+                    <div class="timeline-item">
+                        <div class="date">Aug 2023 - Present</div>
+                        <h3>B.Tech — CSE (AI & ML)</h3>
+                        <p>Lovely Professional University, Punjab, India. <br>Current CGPA: 7.5</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="date">Jun 2020 - Mar 2022</div>
+                        <h3>Intermediate — Class XII</h3>
+                        <p>Govt Boys Higher Secondary School, Attingal, Trivandrum. <br>Score: 90%</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="date">Jun 2019 - Mar 2020</div>
+                        <h3>Matriculation — Class X</h3>
+                        <p>Govt Vocational Higher Secondary School, Attingal, Trivandrum. <br>Score: 96%</p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Coding Profiles Section -->
+        <section id="coding">
+            <h1 class="title-pixel">CODING PROFILES</h1>
+            <div class="retro-card">
+                <div class="tape"></div>
+                <p style="font-size: 1.5rem; text-align: center; margin-bottom: 30px;">
+                    Checkout my competitive programming statistics. You can replace the placeholder below with actual screenshots!
+                </p>
+                <div class="coding-grid">
+                    
+                    <div class="coding-card">
+                        <h3>LeetCode</h3>
+                        <div class="coding-ph">
+                            📸 Screenshot Area
+                            <!-- <img src="leetcode_stat.png" alt="Leetcode Stats"> -->
+                        </div>
+                        <a href="https://leetcode.com/u/abhishekss7/" target="_blank" class="btn btn-blue" style="margin:0;">Visit Profile</a>
+                    </div>
+
+                    <div class="coding-card">
+                        <h3>GeeksForGeeks</h3>
+                        <div class="coding-ph">
+                            📸 Screenshot Area
+                            <!-- <img src="gfg_stat.png" alt="GFG Stats"> -->
+                        </div>
+                        <a href="https://www.geeksforgeeks.org/user/abhishekss7/" target="_blank" class="btn btn-blue" style="margin:0;">Visit Profile</a>
+                    </div>
+
+                    <div class="coding-card">
+                        <h3>HackerRank</h3>
+                        <div class="coding-ph">
+                            📸 Screenshot Area
+                            <!-- <img src="hackerrank_stat.png" alt="HackerRank Stats"> -->
+                        </div>
+                        <a href="https://www.hackerrank.com/profile/arabhishek2004" target="_blank" class="btn btn-blue" style="margin:0;">Visit Profile</a>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact">
+            <h1 class="title-pixel">GET IN TOUCH</h1>
+            <div class="retro-card contact-box">
+                <div class="tape"></div>
+                <p style="font-size: 1.5rem; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+                    Have a project in mind or just want to say hi?<br> I'm always open to discussing new machine learning projects, creative ideas or opportunities to be part of your visions.
+                </p>
+                
+                <div class="contact-details">
+                    <div class="contact-item">
+                        <span>📧</span> arabhishek2004@gmail.com
+                    </div>
+                    <div class="contact-item">
+                        <span>📍</span> Trivandrum, India
+                    </div>
+                </div>
+
+                <a href="mailto:arabhishek2004@gmail.com" class="btn btn-blue">📅 BOOK A CALL</a>
+                
+                <div class="socials">
+                    <a href="https://github.com/Abhishek0ss" target="_blank" title="GitHub">GH</a>
+                    <a href="https://www.linkedin.com/in/abhishekss7/" target="_blank" title="LinkedIn">IN</a>
+                    <a href="https://leetcode.com/u/abhishekss7/" target="_blank" title="LeetCode">LC</a>
+                    <a href="https://www.hackerrank.com/profile/arabhishek2004" target="_blank" title="HackerRank">HR</a>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Snake Game Logic -->
+    <script>
+        // Set Current Date in Hero
+        const dateObj = new Date();
+        document.getElementById('current-date').innerText = dateObj.toLocaleDateString();
+
+        // Snake Game Implementation
+        const canvas = document.getElementById('snake-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const gridSize = 30; // Larger grid for retro feel
+        let snake = [
+            {x: 10, y: 10},
+            {x: 10, y: 11},
+            {x: 10, y: 12}
+        ];
+        let direction = {x: 0, y: -1}; // Moving up initially
+        let food = {x: 20, y: 20};
+        let mode = 'AUTO';
+        let score = 0;
+        let autoTimer = null;
+
+        function resetFood() {
+            food = {
+                x: Math.floor(Math.random() * (canvas.width / gridSize)),
+                y: Math.floor(Math.random() * (canvas.height / gridSize))
+            };
+        }
+        resetFood();
+
+        function updateSnake() {
+            // Auto-pilot logic
+            if (mode === 'AUTO') {
+                const head = snake[0];
+                if (head.x < food.x && direction.x !== -1) direction = {x: 1, y: 0};
+                else if (head.x > food.x && direction.x !== 1) direction = {x: -1, y: 0};
+                else if (head.y < food.y && direction.y !== -1) direction = {x: 0, y: 1};
+                else if (head.y > food.y && direction.y !== 1) direction = {x: 0, y: -1};
+            }
+
+            let headX = snake[0].x + direction.x;
+            let headY = snake[0].y + direction.y;
+
+            // Wrap around the screen edges
+            if (headX * gridSize >= canvas.width) headX = 0;
+            if (headX < 0) headX = Math.floor(canvas.width / gridSize);
+            if (headY * gridSize >= canvas.height) headY = 0;
+            if (headY < 0) headY = Math.floor(canvas.height / gridSize);
+
+            const newHead = {x: headX, y: headY};
+
+            // Check self-collision in manual mode
+            if (mode === 'MANUAL') {
+                for (let i = 0; i < snake.length; i++) {
+                    if (snake[i].x === newHead.x && snake[i].y === newHead.y) {
+                        score = 0;
+                        document.getElementById('score-display').innerText = score;
+                        snake = [{x: 10, y: 10}, {x: 10, y: 11}, {x: 10, y: 12}];
+                        direction = {x: 0, y: -1};
+                        return; // Restart
+                    }
+                }
+            }
+
+            snake.unshift(newHead); // Add new head
+
+            // Check food collision
+            if (newHead.x === food.x && newHead.y === food.y) {
+                score++;
+                document.getElementById('score-display').innerText = score;
+                resetFood();
+            } else {
+                snake.pop(); // Remove tail
+            }
+        }
+
+        function drawSnake() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Food
+            ctx.fillStyle = '#ef4444'; // Red food
+            ctx.fillRect(food.x * gridSize + 2, food.y * gridSize + 2, gridSize - 4, gridSize - 4);
+
+            // Draw Snake
+            snake.forEach((part, index) => {
+                // Head is darker green, body is lighter
+                ctx.fillStyle = index === 0 ? '#10b981' : 'rgba(168, 230, 207, 0.7)';
+                ctx.fillRect(part.x * gridSize + 1, part.y * gridSize + 1, gridSize - 2, gridSize - 2);
+            });
+        }
+
+        function gameLoop() {
+            updateSnake();
+            drawSnake();
+            setTimeout(gameLoop, 120); // Control speed
+        }
+
+        // Listen for arrow keys
+        document.addEventListener('keydown', (e) => {
+            const keys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+            if (keys.includes(e.key)) {
+                // Determine new direction
+                if (e.key === 'ArrowUp' && direction.y !== 1) direction = {x: 0, y: -1};
+                if (e.key === 'ArrowDown' && direction.y !== -1) direction = {x: 0, y: 1};
+                if (e.key === 'ArrowLeft' && direction.x !== 1) direction = {x: -1, y: 0};
+                if (e.key === 'ArrowRight' && direction.x !== -1) direction = {x: 1, y: 0};
+
+                // Switch to Manual Mode
+                if (mode !== 'MANUAL') {
+                    mode = 'MANUAL';
+                    document.getElementById('mode-display').innerText = mode;
+                    document.getElementById('mode-display').style.color = '#ef4444'; // turn red in manual
+                }
+
+                // Reset auto-pilot timer (return to auto after 10s of inactivity)
+                if (autoTimer) clearTimeout(autoTimer);
+                autoTimer = setTimeout(() => {
+                    mode = 'AUTO';
+                    document.getElementById('mode-display').innerText = mode;
+                    document.getElementById('mode-display').style.color = '#4f46e5';
+                }, 10000);
+            }
+        });
+
+        // Start Game
+        gameLoop();
+    </script>
+</body>
+</html>
